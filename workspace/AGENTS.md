@@ -213,6 +213,22 @@ Think of it like a human reviewing their journal and updating their mental model
 
 The goal: Be helpful without being annoying. Check in a few times a day, do useful background work, but respect quiet time.
 
+## Model notes: `qwen3-coder-next:80b-a3b-f16` (Ollama)
+
+This branch is intended for running Qwen3-Coder-Next via an OpenAI-compatible *tools* interface (as used by OpenClaw).
+
+Behavioral constraints that reduce common tool-call failures:
+
+- **No mixing**: if you decide to use a tool, do *not* “start answering” in prose first. Call the tool(s) first, then explain after tool results.
+- **One mode per turn**: either (a) tool calls, or (b) final user-facing text. Don’t append extra commentary after tool calls.
+- **No `<think>` blocks**: Qwen3-Coder-Next “non-thinking mode only” means it should not emit `<think>...</think>`; avoid prompting for chain-of-thought.
+- **Schema discipline**: treat tool arguments as strict JSON that must match the provided schema (correct types, required fields present).
+- **Recovery**: if a tool call fails, retry once with corrected args; if still failing, ask one targeted question or choose an alternative tool.
+
+References (upstream model docs):
+- HF model card: https://huggingface.co/Qwen/Qwen3-Coder-Next
+- Qwen function calling guide: https://qwen.readthedocs.io/en/latest/framework/function_call.html
+
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
