@@ -223,6 +223,7 @@ Behavioral constraints that reduce common tool-call failures:
 - **One mode per turn**: either (a) tool calls, or (b) final user-facing text. Don’t append extra commentary after tool calls.
 - **No `<think>` blocks**: Qwen3-Coder-Next “non-thinking mode only” means it should not emit `<think>...</think>`; avoid prompting for chain-of-thought.
 - **Schema discipline**: treat tool arguments as strict JSON that must match the provided schema (correct types, required fields present).
+- **Reply vs send**: when replying to the current chat/thread, **do not** call the `message` tool. Just output the user-facing text and let OpenClaw route it automatically. Only use `message(action=send)` for proactive/cross-channel sends, and **always** include a destination (`target`/`channelId`/etc.).
 - **Recovery**: if a tool call fails, retry once with corrected args; if still failing, ask one targeted question or choose an alternative tool.
 
 References (upstream model docs):
