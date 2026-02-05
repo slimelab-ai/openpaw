@@ -559,8 +559,50 @@ export function createOpenClawCodingTools(options?: {
           return wrappedTarget.execute(toolCallId, mapped as never, signal, onUpdate);
         }
 
-        // For read/write/edit, wrappedTarget already normalizes file_path/absolute_path/old_string/new_string.
-        // NOTE: replace_all is not implemented yet; if needed, we can implement read+replaceAll+write.
+        // Implement Qwen Code edit.replace_all semantics.
+        if (normalizeToolName(aliasName) === "edit" && args && typeof args === "object") {
+          const normalized = normalizeToolParams(args) ?? (args as Record<string, unknown>);
+          const filePath = typeof normalized.path === "string" ? normalized.path : undefined;
+          const oldText = typeof normalized.oldText === "string" ? normalized.oldText : "";
+          const newText = typeof normalized.newText === "string" ? normalized.newText : "";
+          const replaceAll = normalized.replace_all === true;
+
+          if (replaceAll && filePath) {
+            const readTool = byCanonical.get("read");
+            const writeTool = byCanonical.get("write");
+            if (!readTool || !writeTool) {
+              // Fallback to native edit behavior if we can't orchestrate.
+              return wrappedTarget.execute(toolCallId, normalized as never, signal, onUpdate);
+            }
+
+            // Old string empty => create/overwrite file with newText.
+            if (oldText === "") {
+              return writeTool.execute(toolCallId, { path: filePath, content: newText } as never, signal, onUpdate);
+            }
+
+            const readResult = await readTool.execute(toolCallId, { path: filePath } as never, signal, onUpdate);
+            const blocks = (readResult as any)?.content;
+            const textBlocks = Array.isArray(blocks)
+              ? blocks.filter((b: any) => b && b.type === "text" && typeof b.text === "string")
+              : [];
+            const current = textBlocks.map((b: any) => b.text).join("\n");
+
+            const occurrences = oldText ? current.split(oldText).length - 1 : 0;
+            if (occurrences <= 0) {
+              throw new Error(
+                `Failed to edit (replace_all): 0 occurrences found for old_string in ${filePath}.`,
+              );
+            }
+
+            const updated = current.split(oldText).join(newText);
+            return writeTool.execute(toolCallId, { path: filePath, content: updated } as never, signal, onUpdate);
+          }
+
+          // replace_all not requested -> fall through to native edit.
+          return wrappedTarget.execute(toolCallId, normalized as never, signal, onUpdate);
+        }
+
+        // For read/write, wrappedTarget already normalizes file_path/absolute_path.
         return wrappedTarget.execute(toolCallId, args as never, signal, onUpdate);
       },
     });
