@@ -481,13 +481,88 @@ export function createOpenClawCodingTools(options?: {
     }
     seen.add(normalizedAlias);
 
+    // For common coding tools, adjust schema + param normalization so models trained on
+    // Qwen Code / Claude Code call the right shapes (absolute_path, file_path, old_string, ...).
+    const wrappedTarget =
+      canonical === "read" || canonical === "write" || canonical === "edit"
+        ? wrapToolParamNormalization(
+            target,
+            canonical === "read" ? CLAUDE_PARAM_GROUPS.read : canonical === "write" ? CLAUDE_PARAM_GROUPS.write : CLAUDE_PARAM_GROUPS.edit,
+          )
+        : target;
+
+    // Minimal Qwen Code-compatible schemas for the alias names.
+    // We only override schemas for the alias tool name (what the model sees).
+    const qwenSchemas: Record<string, any> = {
+      read_file: {
+        type: "object",
+        required: ["absolute_path"],
+        properties: {
+          absolute_path: { type: "string", description: "Absolute path to the file to read" },
+          offset: { type: "number", description: "0-based line offset (optional)" },
+          limit: { type: "number", description: "Max lines to read (optional)" },
+        },
+      },
+      write_file: {
+        type: "object",
+        required: ["file_path", "content"],
+        properties: {
+          file_path: { type: "string", description: "Absolute path to the file to write" },
+          content: { type: "string", description: "Content to write" },
+        },
+      },
+      edit: {
+        type: "object",
+        required: ["file_path", "old_string", "new_string"],
+        properties: {
+          file_path: { type: "string", description: "Absolute path to the file to edit" },
+          old_string: { type: "string", description: "Text to replace" },
+          new_string: { type: "string", description: "Replacement text" },
+          replace_all: { type: "boolean", description: "Replace all occurrences (optional)" },
+        },
+      },
+      run_shell_command: {
+        type: "object",
+        required: ["command", "is_background"],
+        properties: {
+          command: { type: "string", description: "Shell command" },
+          directory: { type: "string", description: "Working directory (optional)" },
+          timeout: { type: "number", description: "Timeout in ms (optional)" },
+          is_background: { type: "boolean", description: "Run in background" },
+          description: { type: "string", description: "Human-readable description (optional)" },
+        },
+      },
+    };
+
     aliased.push({
-      ...target,
+      ...wrappedTarget,
       name: aliasName,
       label: aliasName,
-      // Keep the original schema/description so the tool remains compatible.
-      execute: async (toolCallId, args, signal, onUpdate) =>
-        target.execute(toolCallId, args as never, signal, onUpdate),
+      parameters: qwenSchemas[normalizeToolName(aliasName)] ?? wrappedTarget.parameters,
+      execute: async (toolCallId, args, signal, onUpdate) => {
+        // Qwen run_shell_command param normalization
+        if (normalizeToolName(aliasName) === "run_shell_command" && args && typeof args === "object") {
+          const rec = args as Record<string, unknown>;
+          const mapped: Record<string, unknown> = { ...rec };
+          if ("directory" in mapped && !("workdir" in mapped)) {
+            mapped.workdir = mapped.directory;
+            delete mapped.directory;
+          }
+          if ("is_background" in mapped && !("background" in mapped)) {
+            mapped.background = mapped.is_background;
+            delete mapped.is_background;
+          }
+          if ("timeout" in mapped && typeof mapped.timeout === "number") {
+            // OpenClaw exec.timeout is seconds; Qwen uses ms.
+            mapped.timeout = Math.ceil((mapped.timeout as number) / 1000);
+          }
+          return wrappedTarget.execute(toolCallId, mapped as never, signal, onUpdate);
+        }
+
+        // For read/write/edit, wrappedTarget already normalizes file_path/absolute_path/old_string/new_string.
+        // NOTE: replace_all is not implemented yet; if needed, we can implement read+replaceAll+write.
+        return wrappedTarget.execute(toolCallId, args as never, signal, onUpdate);
+      },
     });
   }
 
