@@ -1,12 +1,17 @@
 {
-  "name": "openclaw",
+  "name": "openpaw",
   "version": "2026.2.3",
-  "description": "WhatsApp gateway CLI (Baileys web) with Pi RPC agent",
+  "description": "Your own personal AI assistant. Any OS. Any Platform. The dog way. 🐾",
   "keywords": [],
   "license": "MIT",
   "author": "",
   "bin": {
-    "openclaw": "openclaw.mjs"
+    "openclaw": "openclaw.mjs",
+    "openpaw": "openclaw.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slimelab-ai/openpaw.git"
   },
   "files": [
     "assets/",
