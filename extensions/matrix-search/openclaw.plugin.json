@@ -1,0 +1,10 @@
+{
+  "id": "matrix-search",
+  "name": "Matrix Search",
+  "description": "Native tool wrapper for matrix-indexer-search CLI.",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
