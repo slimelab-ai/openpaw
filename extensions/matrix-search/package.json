@@ -1,0 +1,10 @@
+{
+  "name": "@openclaw/plugin-matrix-search",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "openclaw": {
+    "plugin": true,
+    "entry": "index.ts"
+  }
+}
