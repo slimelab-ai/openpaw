@@ -92,7 +92,9 @@ export function buildGroupIntro(params: {
   const activationLine =
     activation === "always"
       ? "Activation: always-on (you receive every group message)."
-      : "Activation: trigger-only (you are invoked only when explicitly mentioned; recent context may be included).";
+      : activation === "soft"
+        ? "Activation: soft (you are invoked when your name is mentioned naturally; recent context may be included)."
+        : "Activation: trigger-only (you are invoked only when explicitly mentioned; recent context may be included).";
   const groupId = params.sessionEntry?.groupId ?? extractGroupId(params.sessionCtx.From);
   const groupChannel = params.sessionCtx.GroupChannel?.trim() ?? subject;
   const groupSpace = params.sessionCtx.GroupSpace?.trim();

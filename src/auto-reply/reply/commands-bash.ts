@@ -13,6 +13,10 @@ export const handleBashCommand: CommandHandler = async (params, allowTextCommand
   if (!bashSlashRequested && !(bashBangRequested && command.isAuthorizedSender)) {
     return null;
   }
+  // Silently ignore ! prefix when bash is disabled (avoid noisy warnings from bot-command overlap)
+  if (bashBangRequested && !bashSlashRequested && params.cfg.commands?.bash !== true) {
+    return null;
+  }
   if (!command.isAuthorizedSender) {
     logVerbose(`Ignoring /bash from unauthorized sender: ${command.senderId || "<unknown>"}`);
     return { shouldContinue: false };
