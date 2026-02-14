@@ -206,7 +206,10 @@ export async function buildStatusReply(params: {
     }
   }
   const groupActivation = isGroup
-    ? (normalizeGroupActivation(sessionEntry?.groupActivation) ?? defaultGroupActivation(true) as "mention" | "soft" | "always")
+    ? ((normalizeGroupActivation(sessionEntry?.groupActivation) ?? defaultGroupActivation()) as
+        | "mention"
+        | "soft"
+        | "always")
     : undefined;
   const agentDefaults = cfg.agents?.defaults ?? {};
   const statusText = buildStatusMessage({
