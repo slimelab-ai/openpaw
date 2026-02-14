@@ -412,13 +412,17 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         break;
       case "activation":
         if (!args) {
-          chatLog.addSystem("usage: /activation <mention|always>");
+          chatLog.addSystem("usage: /activation <mention|soft|always>");
+          break;
+        }
+        if (!["mention", "soft", "always"].includes(args)) {
+          chatLog.addSystem("usage: /activation <mention|soft|always>");
           break;
         }
         try {
           const result = await client.patchSession({
             key: state.currentSessionKey,
-            groupActivation: args === "always" ? "always" : "mention",
+            groupActivation: args as "mention" | "soft" | "always",
           });
           chatLog.addSystem(`activation set to ${args}`);
           applySessionInfoFromPatch(result);

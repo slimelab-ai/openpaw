@@ -115,7 +115,7 @@ export async function buildStatusReply(params: {
   resolvedElevatedLevel?: ElevatedLevel;
   resolveDefaultThinkingLevel: () => Promise<ThinkLevel | undefined>;
   isGroup: boolean;
-  defaultGroupActivation: () => "always" | "mention";
+  defaultGroupActivation: () => "always" | "mention" | "soft";
   mediaDecisions?: MediaUnderstandingDecision[];
 }): Promise<ReplyPayload | undefined> {
   const {
@@ -206,7 +206,7 @@ export async function buildStatusReply(params: {
     }
   }
   const groupActivation = isGroup
-    ? (normalizeGroupActivation(sessionEntry?.groupActivation) ?? defaultGroupActivation())
+    ? (normalizeGroupActivation(sessionEntry?.groupActivation) ?? defaultGroupActivation(true) as "mention" | "soft" | "always")
     : undefined;
   const agentDefaults = cfg.agents?.defaults ?? {};
   const statusText = buildStatusMessage({

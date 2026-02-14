@@ -1,11 +1,14 @@
 import { normalizeCommandBody } from "./commands-registry.js";
 
-export type GroupActivationMode = "mention" | "always";
+export type GroupActivationMode = "mention" | "soft" | "always";
 
 export function normalizeGroupActivation(raw?: string | null): GroupActivationMode | undefined {
   const value = raw?.trim().toLowerCase();
   if (value === "mention") {
     return "mention";
+  }
+  if (value === "soft") {
+    return "soft";
   }
   if (value === "always") {
     return "always";

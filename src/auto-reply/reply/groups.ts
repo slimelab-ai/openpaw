@@ -55,7 +55,7 @@ export function resolveGroupRequireMention(params: {
   return true;
 }
 
-export function defaultGroupActivation(requireMention: boolean): "always" | "mention" {
+export function defaultGroupActivation(requireMention: boolean): "always" | "mention" | "soft" {
   return !requireMention ? "always" : "mention";
 }
 
@@ -63,7 +63,7 @@ export function buildGroupIntro(params: {
   cfg: OpenClawConfig;
   sessionCtx: TemplateContext;
   sessionEntry?: SessionEntry;
-  defaultActivation: "always" | "mention";
+  defaultActivation: "always" | "mention" | "soft";
   silentToken: string;
 }): string {
   const activation =
@@ -86,10 +86,15 @@ export function buildGroupIntro(params: {
   // Do not embed attacker-controlled labels (group subject, members) in system prompts.
   // These labels are provided as user-role "untrusted context" blocks instead.
   const subjectLine = `You are replying inside a ${providerLabel} group chat.`;
-  const activationLine =
-    activation === "always"
-      ? "Activation: always-on (you receive every group message)."
-      : "Activation: trigger-only (you are invoked only when explicitly mentioned; recent context may be included).";
+  const activationLine = (() => {
+    if (activation === "always") {
+      return "Activation: always-on (you receive every group message).";
+    }
+    if (activation === "soft") {
+      return "Activation: soft (you receive every message but should only respond when naturally addressed, or if you have something important to add).";
+    }
+    return "Activation: trigger-only (you are invoked only when explicitly mentioned; recent context may be included).";
+  })();
   const groupId = params.sessionEntry?.groupId ?? extractGroupId(params.sessionCtx.From);
   const groupChannel =
     params.sessionCtx.GroupChannel?.trim() ?? params.sessionCtx.GroupSubject?.trim();
@@ -104,11 +109,11 @@ export function buildGroupIntro(params: {
       })
     : undefined;
   const silenceLine =
-    activation === "always"
+    activation === "always" || activation === "soft"
       ? `If no response is needed, reply with exactly "${params.silentToken}" (and nothing else) so OpenClaw stays silent. Do not add any other words, punctuation, tags, markdown/code blocks, or explanations.`
       : undefined;
   const cautionLine =
-    activation === "always"
+    activation === "always" || activation === "soft"
       ? "Be extremely selective: reply only when directly addressed or clearly helpful. Otherwise stay silent."
       : undefined;
   const lurkLine =

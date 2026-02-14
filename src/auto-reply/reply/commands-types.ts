@@ -40,7 +40,7 @@ export type HandleCommandsParams = {
   storePath?: string;
   sessionScope?: SessionScope;
   workspaceDir: string;
-  defaultGroupActivation: () => "always" | "mention";
+  defaultGroupActivation: () => "always" | "mention" | "soft";
   resolvedThinkLevel?: ThinkLevel;
   resolvedVerboseLevel: VerboseLevel;
   resolvedReasoningLevel: ReasoningLevel;

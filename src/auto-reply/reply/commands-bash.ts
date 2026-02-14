@@ -10,6 +10,12 @@ export const handleBashCommand: CommandHandler = async (params, allowTextCommand
   const bashSlashRequested =
     command.commandBodyNormalized === "/bash" || command.commandBodyNormalized.startsWith("/bash ");
   const bashBangRequested = command.commandBodyNormalized.startsWith("!");
+
+  // Silently ignore ! when bash is disabled to avoid spamming Matrix bots / exclamation usage.
+  if (bashBangRequested && !bashSlashRequested && params.cfg.commands?.bash !== true) {
+    return null;
+  }
+
   if (!bashSlashRequested && !(bashBangRequested && command.isAuthorizedSender)) {
     return null;
   }

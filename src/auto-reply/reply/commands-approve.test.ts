@@ -36,7 +36,7 @@ function buildParams(commandBody: string, cfg: OpenClawConfig, ctxOverrides?: Pa
     elevated: { enabled: true, allowed: true, failures: [] },
     sessionKey: "agent:main:main",
     workspaceDir: "/tmp",
-    defaultGroupActivation: () => "mention",
+    defaultGroupActivation: () => "mention" as "always" | "mention" | "soft",
     resolvedVerboseLevel: "off" as const,
     resolvedReasoningLevel: "off" as const,
     resolveDefaultThinkingLevel: async () => undefined,
